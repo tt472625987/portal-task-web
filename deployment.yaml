@@ -23,7 +23,7 @@ spec:
         - name: regcred
       containers:
         - name: portal-task-web
-          image: __IMAGE_NAME__:__IMAGE_TAG__ # 将被CI/CD替换
+          image: __IMAGE_NAME__:__IMAGE_TAG__ # CI/CD 替换
           ports:
             - containerPort: 3000
           readinessProbe:
@@ -62,10 +62,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - ray321.cn
+        - task.ray321.cn
       secretName: portal-task-web-tls
   rules:
-    - host: ray321.cn
+    - host: task.ray321.cn
       http:
         paths:
           - path: /

@@ -1,6 +1,10 @@
+import "./globals.css";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import Link from "next/link";
+
+import { homePath, taskPath } from "@/paths";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +31,34 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <nav
+          className="
+            fixed left-0 right-0 top-0 z-20
+            border-b bg-background/60 backdrop-blur
+            w-full flex py-2.5 px-5 justify-between
+          "
+        >
+          <div>
+            <Link className="text-lg font-bold" href={homePath}>
+              Home
+            </Link>
+          </div>
+          <div>
+            <Link className="text-sm font-bold" href={taskPath}>
+              Tasks
+            </Link>
+          </div>
+        </nav>
+        <main
+          className="
+            min-h-screen flex-1
+            overflow-x-hidden overflow-y-auto
+            py-24 px-8
+            flex flex-col
+          "
+        >
+          {children}
+        </main>
       </body>
     </html>
   );

@@ -1,7 +1,13 @@
 import { initialTasks } from "@/data";
 
-const Page = ({ params }: { params: { taskId: string } }) => {
-  const task = initialTasks.find((task) => task.id === params.taskId);
+type Props = {
+  params: Promise<{ taskId: string }>;
+};
+
+const Page = async ({ params }: Props) => {
+  const { taskId } = await params;
+
+  const task = initialTasks.find((task) => task.id === taskId);
 
   if (!task) {
     return <div>Task not found</div>;

@@ -1,7 +1,8 @@
+import { LucideKanban } from "lucide-react";
 import Link from "next/link";
+
 import { buttonVariants } from "@/components/ui/button";
 import { homePath, taskPath } from "@/paths";
-import { LucideKanban } from "lucide-react";
 
 const Header = () => {
   return (

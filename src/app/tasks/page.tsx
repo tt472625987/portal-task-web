@@ -1,16 +1,16 @@
+import { LucideCircleCheck, LucideFile, LucidePencil } from "lucide-react";
 import Link from "next/link";
 
-import { initialTasks } from "@/data";
-import { taskDetailPath } from "@/paths";
+import { Heading } from "@/components/heading";
 import {
   Card,
+  CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
-  CardContent,
 } from "@/components/ui/card";
-import { LucideFile, LucideCircleCheck, LucidePencil } from "lucide-react";
-import { Heading } from "@/components/heading";
+import { initialTasks } from "@/data";
+import { taskDetailPath } from "@/paths";
 
 const TASK_ICON = {
   open: <LucideFile />,

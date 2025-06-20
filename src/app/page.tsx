@@ -1,6 +1,7 @@
-import { taskPath } from "@/paths";
 import Link from "next/link";
+
 import { Heading } from "@/components/heading";
+import { taskPath } from "@/paths";
 
 export default function Home() {
   return (

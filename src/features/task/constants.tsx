@@ -1,0 +1,7 @@
+import { LucideCircleCheck, LucideFile, LucidePencil } from "lucide-react";
+
+export const TASK_ICON = {
+  OPEN: <LucideFile />,
+  DONE: <LucideCircleCheck />,
+  IN_PROGRESS: <LucidePencil />,
+};

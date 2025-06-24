@@ -5,17 +5,17 @@ const Prisma = new PrismaClient();
 const initialTasks = [
   {
     title: "Task 1",
-    description: "Description 1",
+    description: "Description 1 from seed",
     status: "DONE" as const,
   },
   {
     title: "Task 2",
-    description: "Description 2",
+    description: "Description 2 from seed",
     status: "OPEN" as const,
   },
   {
     title: "Task 3",
-    description: "Description 3",
+    description: "Description 3 from seed",
     status: "IN_PROGRESS" as const,
   },
 ];

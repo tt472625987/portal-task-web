@@ -392,6 +392,11 @@
   resolved "https://registry.npmmirror.com/@nolyfill/is-core-module/-/is-core-module-1.0.39.tgz#3dc35ba0f1e66b403c00b39344f870298ebb1c8e"
   integrity sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==
 
+"@prisma/client@6.10.1":
+  version "6.10.1"
+  resolved "https://registry.npmmirror.com/@prisma/client/-/client-6.10.1.tgz#f5cf8731727ea833b53524f300458d0adbb5c58f"
+  integrity sha512-Re4pMlcUsQsUTAYMK7EJ4Bw2kg3WfZAAlr8GjORJaK4VOP6LxRQUQ1TuLnxcF42XqGkWQ36q5CQF1yVadANQ6w==
+
 "@prisma/config@6.10.1":
   version "6.10.1"
   resolved "https://registry.npmmirror.com/@prisma/config/-/config-6.10.1.tgz#d67364aa330af3c5069009f987863806ce2acaad"

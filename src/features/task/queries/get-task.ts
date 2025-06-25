@@ -11,12 +11,14 @@
 //     return resolve(maybeTask || null);
 //   });
 // };
+import { cache } from "react";
+
 import { Prisma } from "@/lib/prisma";
 
-export const getTask = async (taskId: string) => {
+export const getTask = cache(async (taskId: string) => {
   return await Prisma.task.findUnique({
     where: {
-      id: taskId
-    }
+      id: taskId,
+    },
   });
-}
+});

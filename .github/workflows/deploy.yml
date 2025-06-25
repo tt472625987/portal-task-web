@@ -22,23 +22,19 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          # 生成唯一镜像标签 (Git短提交哈希 + 日期)
           IMAGE_TAG="$(date +%Y%m%d)-$(git rev-parse --short HEAD)"
           PUBLIC_IMAGE=registry.cn-chengdu.aliyuncs.com/ray321/portal-task-web
           VPC_IMAGE=registry-vpc.cn-chengdu.aliyuncs.com/ray321/portal-task-web
 
           echo "🛠 构建镜像标签: $IMAGE_TAG"
 
-          # 构建并标记镜像 (同时标记公网)
           docker build \
             --build-arg DATABASE_URL=${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }} \
             --build-arg DIRECT_URL=${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }} \
             -t $PUBLIC_IMAGE:$IMAGE_TAG .
 
-          # 推送镜像到公网仓库
           docker push $PUBLIC_IMAGE:$IMAGE_TAG
 
-          # 保存标签供后续步骤使用
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "VPC_IMAGE=$VPC_IMAGE" >> $GITHUB_ENV
 
@@ -58,19 +54,31 @@ jobs:
           echo "🧪 验证集群连接..."
           kubectl cluster-info || { echo "❌ 集群连接失败"; exit 1; }
 
+      - name: Sync Secrets to Kubernetes
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }}
+        run: |
+          # 使用 kubectl apply 实现幂等更新
+          kubectl create secret generic supabase-secret-portal-task-web \
+            --namespace default \
+            --from-literal=DATABASE_URL="$DATABASE_URL" \
+            --from-literal=DIRECT_URL="$DIRECT_URL" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy to Kubernetes
         run: |
-          echo "::add-mask::$VPC_IMAGE"  # 隐藏内网地址日志
+          echo "::add-mask::$VPC_IMAGE"
           echo "🚀 正在部署版本: $IMAGE_TAG"
 
-          # 替换部署文件中的占位符
           sed -i "s|__IMAGE_TAG__|$IMAGE_TAG|g" deployment.yaml
           sed -i "s|__IMAGE_NAME__|$VPC_IMAGE|g" deployment.yaml
 
-          # 声明式应用配置
           kubectl apply -f deployment.yaml
 
-          # 等待滚动更新完成
+          # 强制重启 Deployment，确保新 Secret 被加载
+          kubectl rollout restart deployment/portal-task-web-deployment
+
           kubectl rollout status deployment/portal-task-web-deployment --timeout=180s || {
             echo "❌ 部署失败，查看 Pod 状态："
             kubectl get pods

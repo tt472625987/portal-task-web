@@ -26,6 +26,18 @@ spec:
           image: __IMAGE_NAME__:__IMAGE_TAG__ # CI/CD 替换
           ports:
             - containerPort: 3000
+          # ✅ 这里注入环境变量（推荐使用 Secret 管理）
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-secret-portal-task-web
+                  key: DATABASE_URL
+            - name: DIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-secret-portal-task-web
+                  key: DIRECT_URL
           readinessProbe:
             httpGet:
               path: /api/health

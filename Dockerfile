@@ -1,14 +1,16 @@
 # Install dependencies only when needed
+# ----------- Step 1: Install dependencies ------------
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Build the project
+# ----------- Step 2: Build project -------------------
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# 💡 允许传入环境变量
+# ✅ 构建阶段允许传入数据库连接（但不存进镜像）
 ARG DATABASE_URL
 ARG DIRECT_URL
 

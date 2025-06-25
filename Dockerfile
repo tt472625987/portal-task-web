@@ -7,6 +7,15 @@ RUN yarn install --frozen-lockfile
 # Build the project
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# 💡 允许传入环境变量
+ARG DATABASE_URL
+ARG DIRECT_URL
+
+# 设置为环境变量供 build 阶段使用
+ENV DATABASE_URL=$DATABASE_URL
+ENV DIRECT_URL=$DIRECT_URL
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN yarn build

@@ -30,7 +30,10 @@ jobs:
           echo "🛠 构建镜像标签: $IMAGE_TAG"
 
           # 构建并标记镜像 (同时标记公网)
-          docker build -t $PUBLIC_IMAGE:$IMAGE_TAG .
+          docker build \
+            --build-arg DATABASE_URL=${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }} \
+            --build-arg DIRECT_URL=${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }} \
+            -t $PUBLIC_IMAGE:$IMAGE_TAG .
 
           # 推送镜像到公网仓库
           docker push $PUBLIC_IMAGE:$IMAGE_TAG

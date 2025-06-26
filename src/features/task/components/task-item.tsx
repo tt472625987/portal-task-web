@@ -1,11 +1,15 @@
 import clsx from "clsx";
-import { LucideSquareArrowOutUpRight, LucideTrash } from "lucide-react";
+import {
+  LucidePencil,
+  LucideSquareArrowOutUpRight,
+  LucideTrash,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TASK_ICON } from "@/features/task/constants";
-import { taskDetailPath } from "@/paths";
+import { taskDetailPath, taskEditPath } from "@/paths";
 
 import { deleteTask } from "../actions/delete-task";
 import { getTask } from "../queries/get-task";
@@ -25,6 +29,14 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
     <Button asChild variant="outline" size="icon">
       <Link prefetch href={taskDetailPath(task.id)}>
         <LucideSquareArrowOutUpRight className="h-4 w-4" />
+      </Link>
+    </Button>
+  );
+
+  const editButton = (
+    <Button asChild variant="outline" size="icon">
+      <Link prefetch href={taskEditPath(task.id)}>
+        <LucidePencil className="h-4 w-4" />
       </Link>
     </Button>
   );
@@ -62,7 +74,17 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
         </CardContent>
       </Card>
       <div className="flex flex-col gap-y-1">
-        {isDetail ? deleteButton : detailButton}
+        {isDetail ? (
+          <>
+            {editButton}
+            {deleteButton}
+          </>
+        ) : (
+          <>
+            {detailButton}
+            {editButton}
+          </>
+        )}
       </div>
     </div>
   );

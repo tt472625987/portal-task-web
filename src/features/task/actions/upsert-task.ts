@@ -1,14 +1,14 @@
 "use server";
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
-import { Prisma } from "@/lib/prisma";
-import { taskDetailPath, taskPath } from "@/paths";
 import {
   ActionState,
   formErrorToActionState,
 } from "@/components/form/utils/to-action-state";
+import { Prisma } from "@/lib/prisma";
+import { taskDetailPath, taskPath } from "@/paths";
 
 const upsertTaskSchema = z.object({
   title: z

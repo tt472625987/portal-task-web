@@ -2,7 +2,10 @@
 import { useActionState } from "react";
 import React from "react";
 
+import { FieldError } from "@/components/form/field-error";
+import { useActionFeedback } from "@/components/form/hooks/use-action-feedback";
 import { SubmitButton } from "@/components/form/submit-button";
+import { EMPTY_ACTION_STATE } from "@/components/form/utils/to-action-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,9 +22,7 @@ const TaskUpsertForm = ({ task }: Props) => {
 
   const [actionState, action] = useActionState(
     upsertTask.bind(null, task?.id),
-    {
-      message: "",
-    }
+    EMPTY_ACTION_STATE
   );
 
   // const upsertTaskAction = (formData: FormData) => {
@@ -30,6 +31,15 @@ const TaskUpsertForm = ({ task }: Props) => {
   //     await upsertTask(task?.id, formData);
   //   });
   // };
+
+  useActionFeedback(actionState, {
+    onSuccess: ({ actionState }) => {
+      console.info(actionState.message);
+    },
+    onError: ({ actionState }) => {
+      console.info(actionState.message);
+    },
+  });
 
   return (
     <form action={action} className="flex flex-col gap-y-2">
@@ -42,6 +52,7 @@ const TaskUpsertForm = ({ task }: Props) => {
           (actionState?.payload?.get("title") as string) || task?.title
         }
       />
+      <FieldError actionState={actionState} name="title" />
 
       <Label htmlFor="content">Content</Label>
       <Textarea
@@ -53,6 +64,7 @@ const TaskUpsertForm = ({ task }: Props) => {
           ""
         }
       />
+      <FieldError actionState={actionState} name="content" />
 
       <SubmitButton label={task?.id ? "Update" : "Create"} />
 

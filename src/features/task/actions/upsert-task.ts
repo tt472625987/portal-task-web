@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   ActionState,
   formErrorToActionState,
+  toActionState,
 } from "@/components/form/utils/to-action-state";
 import { Prisma } from "@/lib/prisma";
 import { taskDetailPath, taskPath } from "@/paths";
@@ -52,7 +53,8 @@ export const upsertTask = async (
     redirect(taskDetailPath(id));
   }
 
-  return {
-    message: id ? "Task Update successfully" : "Task Create successfully",
-  };
+  return toActionState(
+    "SUCCESS",
+    id ? "Task Update successfully" : "Task Create successfully"
+  );
 };

@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import {
+  LucideMoreVertical,
   LucidePencil,
   LucideSquareArrowOutUpRight,
   LucideTrash,
@@ -21,6 +22,7 @@ import { toCurrencyFromCent } from "@/utils/currency";
 import { deleteTask } from "../actions/delete-task";
 import { getTask } from "../queries/get-task";
 import { getTasks } from "../queries/get-tasks";
+import { TaskMoreMenu } from "./task-more-menu";
 
 type Props = {
   task:
@@ -54,6 +56,17 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
         <LucideTrash className="h-4 w-4" />
       </Button>
     </form>
+  );
+
+  const moreMenu = (
+    <TaskMoreMenu
+      task={task}
+      trigger={
+        <Button variant="outline" size="icon">
+          <LucideMoreVertical className="h-4 w-4" />
+        </Button>
+      }
+    />
   );
 
   return (
@@ -91,6 +104,7 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
           <>
             {editButton}
             {deleteButton}
+            {moreMenu}
           </>
         ) : (
           <>

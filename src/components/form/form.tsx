@@ -8,18 +8,29 @@ type Props = {
   children: React.ReactNode;
   actionState: ActionState;
   className?: string;
+  onSuccess?: (actionState: ActionState) => void;
+  onError?: (actionState: ActionState) => void;
 };
 
-const Form = ({ action, className, actionState, children }: Props) => {
+const Form = ({
+  action,
+  className,
+  actionState,
+  onSuccess,
+  onError,
+  children,
+}: Props) => {
   useActionFeedback(actionState, {
     onSuccess: ({ actionState }) => {
       if (actionState.message) {
         toast.success(actionState.message);
+        onSuccess?.(actionState);
       }
     },
     onError: ({ actionState }) => {
       if (actionState.message) {
         toast.error(actionState.message);
+        onError?.(actionState);
       }
     },
   });

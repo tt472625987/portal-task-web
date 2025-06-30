@@ -2,7 +2,10 @@
 import { useActionState } from "react";
 import React from "react";
 
-import { DatePicker } from "@/components/date-pick";
+import {
+  DatePicker,
+  imperativeHandleFromDatePicker,
+} from "@/components/date-pick";
 import { FieldError } from "@/components/form/field-error";
 import { Form } from "@/components/form/form";
 import { SubmitButton } from "@/components/form/submit-button";
@@ -34,11 +37,19 @@ const TaskUpsertForm = ({ task }: Props) => {
   //   });
   // };
 
+  const datePickerImprtativeHandlerRef =
+    React.useRef<imperativeHandleFromDatePicker>(null);
+
+  const handleSuccess = () => {
+    datePickerImprtativeHandlerRef.current?.reset();
+  };
+
   return (
     <Form
       className="flex flex-col gap-y-2"
       actionState={actionState}
       action={action}
+      onSuccess={handleSuccess}
     >
       <Label htmlFor="title">Title</Label>
       <Input
@@ -68,12 +79,14 @@ const TaskUpsertForm = ({ task }: Props) => {
           <Label htmlFor="deadline">Deadline</Label>
 
           <DatePicker
+            // key={actionState.timestamp}
             id="deadline"
             name="deadline"
             defaultValue={
               (actionState?.payload?.get("deadline") as string) ??
               task?.deadline
             }
+            imperativeHandleRef={datePickerImprtativeHandlerRef}
           />
           {/* <Input
             id="deadline"

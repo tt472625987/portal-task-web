@@ -2,13 +2,15 @@
 import { useActionState } from "react";
 import React from "react";
 
+import { DatePicker } from "@/components/date-pick";
 import { FieldError } from "@/components/form/field-error";
-import { useActionFeedback } from "@/components/form/hooks/use-action-feedback";
+import { Form } from "@/components/form/form";
 import { SubmitButton } from "@/components/form/submit-button";
 import { EMPTY_ACTION_STATE } from "@/components/form/utils/to-action-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fromCent } from "@/utils/currency";
 
 import { upsertTask } from "../actions/upsert-task";
 import { getTask } from "../queries/get-task";
@@ -32,17 +34,12 @@ const TaskUpsertForm = ({ task }: Props) => {
   //   });
   // };
 
-  useActionFeedback(actionState, {
-    onSuccess: ({ actionState }) => {
-      console.info(actionState.message);
-    },
-    onError: ({ actionState }) => {
-      console.info(actionState.message);
-    },
-  });
-
   return (
-    <form action={action} className="flex flex-col gap-y-2">
+    <Form
+      className="flex flex-col gap-y-2"
+      actionState={actionState}
+      action={action}
+    >
       <Label htmlFor="title">Title</Label>
       <Input
         id="title"
@@ -66,10 +63,47 @@ const TaskUpsertForm = ({ task }: Props) => {
       />
       <FieldError actionState={actionState} name="content" />
 
-      <SubmitButton label={task?.id ? "Update" : "Create"} />
+      <div className="flex gap-x-2 mb-1">
+        <div className="w-1/2">
+          <Label htmlFor="deadline">Deadline</Label>
 
-      {actionState?.message}
-    </form>
+          <DatePicker
+            id="deadline"
+            name="deadline"
+            defaultValue={
+              (actionState?.payload?.get("deadline") as string) ??
+              task?.deadline
+            }
+          />
+          {/* <Input
+            id="deadline"
+            name="deadline"
+            type="date"
+            defaultValue={
+              (actionState?.payload?.get("deadline") as string) ??
+              task?.deadline
+            }
+          /> */}
+          <FieldError actionState={actionState} name="deadline" />
+        </div>
+        <div className="w-1/2">
+          <Label htmlFor="bounty">Bounty（$）</Label>
+          <Input
+            id="bounty"
+            name="bounty"
+            type="number"
+            step="0.01"
+            defaultValue={
+              (actionState?.payload?.get("bounty") as string) ??
+              (task?.bounty ? fromCent(task?.bounty) : "")
+            }
+          />
+          <FieldError actionState={actionState} name="bounty" />
+        </div>
+      </div>
+
+      <SubmitButton label={task?.id ? "Update" : "Create"} />
+    </Form>
   );
 };
 

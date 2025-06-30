@@ -22,6 +22,8 @@ model Task {
   title       String
   description String?    @db.VarChar(1024)
   status      TaskStatus @default(OPEN)
+  deadline    String
+  bounty      Int
 }
 
 enum TaskStatus {

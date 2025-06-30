@@ -7,9 +7,16 @@ import {
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { TASK_ICON } from "@/features/task/constants";
 import { taskDetailPath, taskEditPath } from "@/paths";
+import { toCurrencyFromCent } from "@/utils/currency";
 
 import { deleteTask } from "../actions/delete-task";
 import { getTask } from "../queries/get-task";
@@ -72,6 +79,12 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
             {task.description}
           </span>
         </CardContent>
+        <CardFooter className="flex justify-between">
+          <p className="text-sm text-muted-foreground">{task.deadline}</p>
+          <p className="text-sm text-muted-foreground">
+            {toCurrencyFromCent(task.bounty)}
+          </p>
+        </CardFooter>
       </Card>
       <div className="flex flex-col gap-y-1">
         {isDetail ? (

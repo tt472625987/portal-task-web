@@ -3,7 +3,6 @@ import {
   LucideMoreVertical,
   LucidePencil,
   LucideSquareArrowOutUpRight,
-  LucideTrash,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -19,7 +18,6 @@ import { TASK_ICON } from "@/features/task/constants";
 import { taskDetailPath, taskEditPath } from "@/paths";
 import { toCurrencyFromCent } from "@/utils/currency";
 
-import { deleteTask } from "../actions/delete-task";
 import { getTask } from "../queries/get-task";
 import { getTasks } from "../queries/get-tasks";
 import { TaskMoreMenu } from "./task-more-menu";
@@ -48,14 +46,6 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
         <LucidePencil className="h-4 w-4" />
       </Link>
     </Button>
-  );
-
-  const deleteButton = (
-    <form action={deleteTask.bind(null, task.id)}>
-      <Button variant="outline" size="icon">
-        <LucideTrash className="h-4 w-4" />
-      </Button>
-    </form>
   );
 
   const moreMenu = (
@@ -103,7 +93,6 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
         {isDetail ? (
           <>
             {editButton}
-            {deleteButton}
             {moreMenu}
           </>
         ) : (

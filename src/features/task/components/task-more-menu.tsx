@@ -4,6 +4,7 @@ import { LucideTrash } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
+import { useConfirmDialog } from "@/components/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { deleteTask } from "../actions/delete-task";
 import { updateTaskStatus } from "../actions/update-task-status";
 import { TASK_STATUS_LABELS } from "../constants";
 
@@ -23,12 +25,15 @@ type Props = {
 };
 
 const TaskMoreMenu = ({ task, trigger }: Props) => {
-  const deleteButton = (
-    <DropdownMenuItem>
-      <LucideTrash className="mr-2 h-4 w-4" />
-      <span>Delete</span>
-    </DropdownMenuItem>
-  );
+  const [deleteButton, deleteDialog] = useConfirmDialog({
+    action: deleteTask.bind(null, task.id),
+    trigger: (
+      <DropdownMenuItem>
+        <LucideTrash className="mr-2 h-4 w-4" />
+        <span>Delete</span>
+      </DropdownMenuItem>
+    ),
+  });
 
   const handleUpdateTaskStatus = async (value: string) => {
     const promise = updateTaskStatus(task.id, value as Task["status"]);
@@ -59,14 +64,17 @@ const TaskMoreMenu = ({ task, trigger }: Props) => {
   );
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" side="right">
-        {taskStatusRadioGroupItems}
-        <DropdownMenuSeparator />
-        {deleteButton}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      {deleteDialog}
+      <DropdownMenu>
+        <DropdownMenuTrigger>{trigger}</DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" side="right">
+          {taskStatusRadioGroupItems}
+          <DropdownMenuSeparator />
+          {deleteButton}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 };
 

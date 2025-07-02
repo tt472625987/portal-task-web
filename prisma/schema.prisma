@@ -44,7 +44,7 @@ model Session {
   id        String   @id @default(cuid())
   expiresAt DateTime
   userId    String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

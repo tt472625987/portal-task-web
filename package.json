@@ -11,7 +11,8 @@
     "type": "tsc --noEmit",
     "prismainit": "prisma init",
     "prismapush": "prisma db push",
-    "prismainstall": "prisma generate"
+    "prismainstall": "prisma generate",
+    "prisma-seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "6.10.1",

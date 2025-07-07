@@ -5,6 +5,13 @@ import {
   formErrorToActionState,
   toActionState,
 } from "@/components/form/utils/to-action-state";
+import { lucia } from "@/lib/lucia";
+import { prisma } from "@/lib/prisma";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { taskPath } from "@/paths";
+import { hash } from "@node-rs/argon2";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 const signUpSchema = z
@@ -43,13 +50,46 @@ const signUpSchema = z
     }
   });
 
-export const signUp = async (_actionState: ActionState, data: FormData) => {
+export const signUp = async (_actionState: ActionState, formData: FormData) => {
   try {
-    const { username, email, password, confirmPassword } = signUpSchema.parse(
-      Object.fromEntries(data)
+    const { username, email, password } = signUpSchema.parse(
+      Object.fromEntries(formData)
+    );
+
+    const passwordHash = await hash(password);
+
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        passwordHash,
+      },
+    });
+
+    const session = await lucia.createSession(user.id, {});
+    const sessionCookie = await lucia.createSessionCookie(session.id);
+
+    const _cookie = await cookies();
+    _cookie.set(
+      sessionCookie.name,
+      sessionCookie.value,
+      sessionCookie.attributes
     );
   } catch (error) {
-    return formErrorToActionState(error, data);
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as any).code === "P2002"
+    ) {
+      return toActionState(
+        "ERROR",
+        "Either email or username is already in use",
+        formData
+      );
+    }
+
+    return formErrorToActionState(error, formData);
   }
-  return toActionState("SUCCESS", "Sign up successful");
+  redirect(taskPath);
 };

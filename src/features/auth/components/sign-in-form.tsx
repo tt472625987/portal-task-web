@@ -1,27 +1,21 @@
 "use client";
 import { Input } from "@/components/ui/input";
-import { signUp } from "../actions/sign-up";
+import { signIn } from "../actions/sign-in";
 import { SubmitButton } from "@/components/form/submit-button";
 import { useActionState } from "react";
 import { EMPTY_ACTION_STATE } from "@/components/form/utils/to-action-state";
 import { Form } from "@/components/form/form";
 import { FieldError } from "@/components/form/field-error";
 
-const SignUpForm = () => {
-  const [actionState, action] = useActionState(signUp, EMPTY_ACTION_STATE);
+const SignInForm = () => {
+  const [actionState, action] = useActionState(signIn, EMPTY_ACTION_STATE);
 
   return (
     <Form
+      className="flex flex-col gap-y-4"
       action={action}
       actionState={actionState}
-      className="flex flex-col gap-y-4"
     >
-      <Input
-        name="username"
-        placeholder="Username"
-        defaultValue={actionState.payload?.get("username") as string}
-      />
-      <FieldError name="username" actionState={actionState} />
       <Input
         name="email"
         placeholder="Email"
@@ -35,16 +29,9 @@ const SignUpForm = () => {
         defaultValue={actionState.payload?.get("password") as string}
       />
       <FieldError name="password" actionState={actionState} />
-      <Input
-        name="confirmPassword"
-        type="password"
-        placeholder="Confirm Password"
-        defaultValue={actionState.payload?.get("confirmPassword") as string}
-      />
-      <FieldError name="confirmPassword" actionState={actionState} />
-      <SubmitButton label="Sign Up" />
+      <SubmitButton label="Sign In" />
     </Form>
   );
 };
 
-export { SignUpForm };
+export { SignInForm };

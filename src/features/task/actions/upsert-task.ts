@@ -10,7 +10,7 @@ import {
   formErrorToActionState,
   toActionState,
 } from "@/components/form/utils/to-action-state";
-import { Prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { taskDetailPath, taskPath } from "@/paths";
 import { toCent } from "@/utils/currency";
 
@@ -46,7 +46,7 @@ export const upsertTask = async (
       bounty: toCent(data.bounty),
     };
 
-    await Prisma.task.upsert({
+    await prisma.task.upsert({
       where: { id: id || "" },
       create: dbData,
       update: dbData,

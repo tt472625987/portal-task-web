@@ -1,23 +1,26 @@
 import { CardCompact } from "@/components/card-compact";
-import { SignUpForm } from "@/features/auth/components/sign-up-form";
-import { signInPath } from "@/paths";
+import { SignInForm } from "@/features/auth/components/sign-in-form";
+import { passwordForgotPath, signInPath } from "@/paths";
 import Link from "next/link";
 
-const SignUpPage = () => {
+const SignInPage = () => {
   return (
     <div className="flex flex-col flex-1 justify-center items-center">
       <CardCompact
-        title="Sign Up"
-        description="Create a new account"
+        title="Sign In"
+        description="Sign In to your account"
         className="w-full max-w-[420px] self-center animate-fade-in-from-top"
-        content={<SignUpForm />}
+        content={<SignInForm />}
         footer={
           <div className="flex flex-1 items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              Already have an account?
-            </span>
             <Link href={signInPath} className="text-sm text-muted-foreground">
-              Sign in now.
+              No account yet?
+            </Link>
+            <Link
+              href={passwordForgotPath}
+              className="text-sm text-muted-foreground"
+            >
+              Forgot Password?
             </Link>
           </div>
         }
@@ -26,4 +29,4 @@ const SignUpPage = () => {
   );
 };
 
-export default SignUpPage;
+export default SignInPage;

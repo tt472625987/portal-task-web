@@ -1,4 +1,4 @@
-import { Prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 // import { initialTasks } from "@/data";
 
 // import type { Task } from "../type";
@@ -13,11 +13,10 @@ import { Prisma } from "@/lib/prisma";
 //   });
 // };
 
-
 export const getTasks = async () => {
-  return await Prisma.task.findMany({
+  return await prisma.task.findMany({
     orderBy: {
-      'createdAt': 'desc'
-    }
-  })
-}
+      createdAt: "desc",
+    },
+  });
+};

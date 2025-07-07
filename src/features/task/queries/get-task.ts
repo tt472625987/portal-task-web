@@ -13,10 +13,10 @@
 // };
 import { cache } from "react";
 
-import { Prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export const getTask = cache(async (taskId: string) => {
-  return await Prisma.task.findUnique({
+  return await prisma.task.findUnique({
     where: {
       id: taskId,
     },

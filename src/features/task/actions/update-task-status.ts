@@ -7,12 +7,12 @@ import {
   formErrorToActionState,
   toActionState,
 } from "@/components/form/utils/to-action-state";
-import { Prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { taskPath } from "@/paths";
 
 const updateTaskStatus = async (id: string, status: TaskStatus) => {
   try {
-    await Prisma.task.update({
+    await prisma.task.update({
       where: { id },
       data: { status },
     });

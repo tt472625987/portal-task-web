@@ -5,12 +5,12 @@ import { redirect } from "next/navigation";
 
 import { setCookieByKey } from "@/actions/cookies";
 import { formErrorToActionState } from "@/components/form/utils/to-action-state";
-import { Prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { taskPath } from "@/paths";
 
 export const deleteTask = async (taskId: string) => {
   try {
-    await Prisma.task.delete({
+    await prisma.task.delete({
       where: { id: taskId },
     });
   } catch (error) {

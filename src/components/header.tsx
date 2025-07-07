@@ -2,12 +2,12 @@ import { LucideKanban, LucideLogOut } from "lucide-react";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
+import { signOut } from "@/features/auth/actions/sign-out";
+import { getAuth } from "@/features/auth/queries/get-auth";
 import { homePath, signInPath, signUpPath, taskPath } from "@/paths";
 
-import { ThemeSwitcher } from "./theme/theme-switcher";
-import { signOut } from "@/features/auth/actions/sign-out";
 import { SubmitButton } from "./form/submit-button";
-import { getAuth } from "@/features/auth/queries/get-auth";
+import { ThemeSwitcher } from "./theme/theme-switcher";
 
 const Header = async () => {
   const { user } = await getAuth();

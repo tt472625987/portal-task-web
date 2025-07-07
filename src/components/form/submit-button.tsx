@@ -1,10 +1,10 @@
 "use client";
+import clsx from "clsx";
 import { LucideLoaderCircle } from "lucide-react";
+import React, { cloneElement } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
-import React, { cloneElement } from "react";
-import clsx from "clsx";
 
 type Props = {
   label?: string;

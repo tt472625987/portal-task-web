@@ -1,5 +1,10 @@
 "use server";
 
+import { hash } from "@node-rs/argon2";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
 import {
   ActionState,
   formErrorToActionState,
@@ -7,12 +12,7 @@ import {
 } from "@/components/form/utils/to-action-state";
 import { lucia } from "@/lib/lucia";
 import { prisma } from "@/lib/prisma";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { taskPath } from "@/paths";
-import { hash } from "@node-rs/argon2";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 
 const signUpSchema = z
   .object({
@@ -80,7 +80,7 @@ export const signUp = async (_actionState: ActionState, formData: FormData) => {
       typeof error === "object" &&
       error !== null &&
       "code" in error &&
-      (error as any).code === "P2002"
+      error.code === "P2002"
     ) {
       return toActionState(
         "ERROR",

@@ -24,6 +24,10 @@ model Task {
   status      TaskStatus @default(OPEN)
   deadline    String
   bounty      Int
+  userId      String     @db.Uuid
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum TaskStatus {
@@ -38,6 +42,7 @@ model User {
   email        String    @unique
   passwordHash String
   sessions     Session[]
+  tasks        Task[]
 }
 
 model Session {

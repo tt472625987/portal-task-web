@@ -1,16 +1,21 @@
+"use client";
 import { LucideKanban, LucideLogOut } from "lucide-react";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
 import { signOut } from "@/features/auth/actions/sign-out";
-import { getAuth } from "@/features/auth/queries/get-auth";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { homePath, signInPath, signUpPath, taskPath } from "@/paths";
 
 import { SubmitButton } from "./form/submit-button";
 import { ThemeSwitcher } from "./theme/theme-switcher";
 
-const Header = async () => {
-  const { user } = await getAuth();
+const Header = () => {
+  const { user, isFetched } = useAuth();
+
+  if (!isFetched) {
+    return null;
+  }
 
   const navItems = user ? (
     <>
@@ -43,6 +48,7 @@ const Header = async () => {
             fixed left-0 right-0 top-0 z-20
             border-b bg-background/60 backdrop-blur
             w-full flex py-2.5 px-5 justify-between
+            animate-header-from-top
           "
     >
       <div className="flex align-items gap-x-2">

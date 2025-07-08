@@ -20,5 +20,12 @@ export const getTask = cache(async (taskId: string) => {
     where: {
       id: taskId,
     },
+    include: {
+      user: {
+        select: {
+          username: true,
+        },
+      },
+    },
   });
 });

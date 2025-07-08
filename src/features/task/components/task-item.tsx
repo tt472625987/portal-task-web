@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import clsx from "clsx";
 import {
   LucideMoreVertical,
@@ -18,14 +19,12 @@ import { TASK_ICON } from "@/features/task/constants";
 import { taskDetailPath, taskEditPath } from "@/paths";
 import { toCurrencyFromCent } from "@/utils/currency";
 
-import { getTask } from "../queries/get-task";
-import { getTasks } from "../queries/get-tasks";
 import { TaskMoreMenu } from "./task-more-menu";
 
 type Props = {
-  task:
-    | Awaited<ReturnType<typeof getTasks>>[number]
-    | Awaited<ReturnType<typeof getTask>>;
+  task: Prisma.TaskGetPayload<{
+    include: { user: { select: { username: true } } };
+  }>;
   isDetail?: boolean;
 };
 
@@ -83,7 +82,9 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
           </span>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <p className="text-sm text-muted-foreground">{task.deadline}</p>
+          <p className="text-sm text-muted-foreground">
+            {task.deadline} by {task.user.username}
+          </p>
           <p className="text-sm text-muted-foreground">
             {toCurrencyFromCent(task.bounty)}
           </p>

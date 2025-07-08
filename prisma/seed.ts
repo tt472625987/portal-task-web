@@ -1,6 +1,14 @@
+import { hash } from "@node-rs/argon2";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+const initialUsers = [
+  {
+    username: "admin",
+    email: "admin@admin.com",
+  },
+];
 
 const initialTasks = [
   {
@@ -18,10 +26,21 @@ async function seed() {
 
   try {
     // 清空旧任务
+    await prisma.user.deleteMany();
     await prisma.task.deleteMany();
 
+    const passwordHash = await hash("admin123");
+
     // 创建新任务
-    await prisma.task.createMany({ data: initialTasks });
+    const dnUser = await prisma.user.createManyAndReturn({
+      data: initialUsers?.map((user) => ({ ...user, passwordHash })),
+    });
+    await prisma.task.createMany({
+      data: initialTasks?.map((task) => ({
+        ...task,
+        userId: dnUser[0].id,
+      })),
+    });
 
     const t1 = performance.now();
     console.log(`DB Seed: Finished（${(t1 - t0).toFixed(1)}ms）`);

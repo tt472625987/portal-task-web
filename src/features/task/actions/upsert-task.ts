@@ -10,8 +10,9 @@ import {
   formErrorToActionState,
   toActionState,
 } from "@/components/form/utils/to-action-state";
+import { getAuth } from "@/features/auth/queries/get-auth";
 import { prisma } from "@/lib/prisma";
-import { taskDetailPath, taskPath } from "@/paths";
+import { signInPath, taskDetailPath, taskPath } from "@/paths";
 import { toCent } from "@/utils/currency";
 
 const upsertTaskSchema = z.object({
@@ -32,6 +33,12 @@ export const upsertTask = async (
   _actionState: ActionState,
   formData: FormData
 ) => {
+  const { user } = await getAuth();
+
+  if (!user) {
+    redirect(signInPath);
+  }
+
   try {
     const data = upsertTaskSchema.parse({
       title: formData.get("title"),
@@ -42,6 +49,7 @@ export const upsertTask = async (
 
     const dbData = {
       ...omit(data, "content"),
+      userId: user.id,
       description: data.content,
       bounty: toCent(data.bounty),
     };

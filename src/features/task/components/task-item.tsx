@@ -15,6 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getAuth } from "@/features/auth/queries/get-auth";
+import { isOwner } from "@/features/auth/utils/is-owner";
 import { TASK_ICON } from "@/features/task/constants";
 import { taskDetailPath, taskEditPath } from "@/paths";
 import { toCurrencyFromCent } from "@/utils/currency";
@@ -28,8 +30,12 @@ type Props = {
   isDetail?: boolean;
 };
 
-const TaskItem = ({ task, isDetail = false }: Props) => {
+const TaskItem = async (props: Props) => {
+  const { task, isDetail = false } = props;
   if (!task) return null;
+
+  const { user } = await getAuth();
+  const isTaskOwner = isOwner(user, task);
 
   const detailButton = (
     <Button asChild variant="outline" size="icon">
@@ -39,15 +45,15 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
     </Button>
   );
 
-  const editButton = (
+  const editButton = isTaskOwner ? (
     <Button asChild variant="outline" size="icon">
       <Link prefetch href={taskEditPath(task.id)}>
         <LucidePencil className="h-4 w-4" />
       </Link>
     </Button>
-  );
+  ) : null;
 
-  const moreMenu = (
+  const moreMenu = isTaskOwner ? (
     <TaskMoreMenu
       task={task}
       trigger={
@@ -56,7 +62,7 @@ const TaskItem = ({ task, isDetail = false }: Props) => {
         </Button>
       }
     />
-  );
+  ) : null;
 
   return (
     <div

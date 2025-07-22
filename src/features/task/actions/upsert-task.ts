@@ -10,9 +10,10 @@ import {
   formErrorToActionState,
   toActionState,
 } from "@/components/form/utils/to-action-state";
-import { getAuth } from "@/features/auth/queries/get-auth";
+import { getAuthOrRedirect } from "@/features/auth/queries/get-auth-or-redirect";
+import { isOwner } from "@/features/auth/utils/is-owner";
 import { prisma } from "@/lib/prisma";
-import { signInPath, taskDetailPath, taskPath } from "@/paths";
+import { taskDetailPath, taskPath } from "@/paths";
 import { toCent } from "@/utils/currency";
 
 const upsertTaskSchema = z.object({
@@ -33,13 +34,20 @@ export const upsertTask = async (
   _actionState: ActionState,
   formData: FormData
 ) => {
-  const { user } = await getAuth();
-
-  if (!user) {
-    redirect(signInPath);
-  }
+  const { user } = await getAuthOrRedirect();
 
   try {
+    // 先根据id查询task，然后判断task的userId是否是现在登录的用户，如果不是，则抛出异常
+    if (id) {
+      const task = await prisma.task.findUnique({
+        where: { id },
+      });
+
+      if (!task || !isOwner(user, task)) {
+        return toActionState("ERROR", "Not authorized");
+      }
+    }
+
     const data = upsertTaskSchema.parse({
       title: formData.get("title"),
       content: formData.get("content"),

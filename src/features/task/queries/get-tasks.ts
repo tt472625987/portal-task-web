@@ -13,10 +13,13 @@ import { prisma } from "@/lib/prisma";
 //   });
 // };
 
-export const getTasks = async () => {
+export const getTasks = async (userId: string | undefined) => {
   return await prisma.task.findMany({
     orderBy: {
       createdAt: "desc",
+    },
+    where: {
+      userId,
     },
     include: {
       user: {

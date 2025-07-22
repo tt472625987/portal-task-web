@@ -1,21 +1,21 @@
-import Link from "next/link";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { Heading } from "@/components/heading";
-import { taskPath } from "@/paths";
+import { Placeholder } from "@/components/placeholder";
+import { Spinner } from "@/components/spinner";
+import { TaskList } from "@/features/task/components/task-list";
 
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col gap-y-8">
-      <Heading
-        title="Welcome to TaskBounty"
-        description="Your task management solution"
-      />
+      <Heading title="All Tasks" description="Tasks by everyone at one place" />
 
-      <div className="flex-1 flex flex-col items-center">
-        <Link className="underline" href={taskPath}>
-          Go to Tasks
-        </Link>
-      </div>
+      <ErrorBoundary fallback={<Placeholder label="Something went wrong!" />}>
+        <Suspense fallback={<Spinner />}>
+          <TaskList />
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 }

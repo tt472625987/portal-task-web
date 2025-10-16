@@ -13,10 +13,8 @@ jobs:
       - name: Checkout code via SSH
         uses: actions/checkout@v3
         with:
-          # GitHub 仓库 SSH 地址
-          repository: git@github.com:tt472625987/portal-task-web.git
+          repository: tt472625987/portal-task-web.git
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # 可选，拉取全部 commit 历史
           fetch-depth: 0
 
       - name: Login to Tencent Container Registry

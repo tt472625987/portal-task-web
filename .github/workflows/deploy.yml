@@ -13,7 +13,7 @@ jobs:
       - name: Checkout code via SSH
         uses: actions/checkout@v3
         with:
-          repository: tt472625987/portal-task-web.git
+          repository: tt472625987/portal-task-web
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           fetch-depth: 0
 

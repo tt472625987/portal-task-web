@@ -41,10 +41,10 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: "latest"
+      # - name: Setup kubectl
+      #   uses: azure/setup-kubectl@v3
+      #   with:
+      #     version: "latest"
 
       - name: Configure cluster access
         env:

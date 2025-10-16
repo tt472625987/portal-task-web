@@ -44,10 +44,10 @@ jobs:
 
       - name: Configure cluster access
         env:
-          KUBECONFIG_B64: ${{ secrets.KUBECONFIG }}
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
           mkdir -p $HOME/.kube
-          echo "$KUBECONFIG_B64" | base64 --decode > $HOME/.kube/config
+          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
 
           echo "🧪 验证集群连接..."

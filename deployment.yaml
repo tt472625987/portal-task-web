@@ -20,7 +20,7 @@ spec:
         app: portal-task-web
     spec:
       imagePullSecrets:
-        - name: regcred
+        - name: tencentyun-secret
       containers:
         - name: portal-task-web
           image: __IMAGE_NAME__:__IMAGE_TAG__ # CI/CD 替换
@@ -71,13 +71,10 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
-  tls:
-    - hosts:
-        - task.ray321.cn
-      secretName: portal-task-web-tls
   rules:
-    - host: task.ray321.cn
+    - host: task.tt829.cn
       http:
         paths:
           - path: /

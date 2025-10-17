@@ -72,8 +72,12 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: myresolver
 spec:
-  ingressClassName: traefik
+  tls:
+    - hosts:
+        - task.tt829.cn
+      secretName: portal-task-web-tls
   rules:
     - host: task.tt829.cn
       http:

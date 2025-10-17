@@ -74,10 +74,6 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: myresolver
 spec:
-  tls:
-    - hosts:
-        - task.tt829.cn
-      secretName: portal-task-web-tls
   rules:
     - host: task.tt829.cn
       http:

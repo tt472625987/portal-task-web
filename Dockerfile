@@ -3,7 +3,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --production
 
 # Build the project
 # ----------- Step 2: Build project -------------------
@@ -17,10 +17,11 @@ ARG DIRECT_URL
 # 设置为环境变量供 build 阶段使用
 ENV DATABASE_URL=$DATABASE_URL
 ENV DIRECT_URL=$DIRECT_URL
+ENV NODE_ENV=production
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN yarn build
+RUN yarn build && rm -rf .next/cache
 
 # Production image
 FROM node:20-alpine AS runner

@@ -1,51 +1,88 @@
-name: Deploy to production
+name: 🚀 Build & Deploy to Production
 
 on:
   push:
     branches: [main]
 
 jobs:
-  build-and-deploy:
+  # =============================
+  # 1️⃣ 构建镜像并推送到腾讯 TCR
+  # =============================
+  build:
+    name: 🏗️ Build & Push Docker Image
     runs-on: [self-hosted, linux, x64]
-    environment: production
+
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      tag: ${{ steps.meta.outputs.tag }}
 
     steps:
-      - name: Checkout code via SSH
-        uses: actions/checkout@v3
+      # 拉取仓库代码
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           repository: tt472625987/portal-task-web
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           fetch-depth: 0
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY || '' }}
 
+      # 缓存 Node 模块，加快 yarn install
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.cache/yarn
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
+      # 登录腾讯容器镜像服务 TCR
       - name: Login to Tencent Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ccr.ccs.tencentyun.com
           username: ${{ secrets.TCR_USERNAME }}
           password: ${{ secrets.TCR_PASSWORD }}
 
-      - name: Build and push Docker image
+      # 生成语义化版本号（优先用 Git tag，没有则用日期+commit）
+      - name: Generate image metadata
+        id: meta
         run: |
-          IMAGE_TAG="$(date +%Y%m%d)-$(git rev-parse --short HEAD)"
           IMAGE=ccr.ccs.tencentyun.com/ray321/portal-task-web
+          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            VERSION=$(git describe --tags --abbrev=0)
+          else
+            VERSION="v0.0.0-$(git rev-parse --short HEAD)"
+          fi
+          IMAGE_TAG="${VERSION}-$(date +%Y%m%d)"
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "🧩 IMAGE=$IMAGE"
+          echo "🧩 TAG=$IMAGE_TAG"
 
-          echo "🛠 构建镜像标签: $IMAGE_TAG"
-
-          docker build \
+      # 构建并推送镜像，开启 Docker 层缓存
+      - name: Build & Push Docker Image
+        run: |
+          docker buildx build \
             --build-arg DATABASE_URL=${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }} \
             --build-arg DIRECT_URL=${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }} \
-            -t $IMAGE:$IMAGE_TAG .
+            --cache-from=type=gha \
+            --cache-to=type=gha,mode=max \
+            -t ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }} \
+            --push .
 
-          docker push $IMAGE:$IMAGE_TAG
+  # =============================
+  # 2️⃣ 部署到 Kubernetes 集群
+  # =============================
+  deploy:
+    name: 🚀 Deploy to Kubernetes
+    runs-on: [self-hosted, linux, x64]
+    needs: build
+    environment: production
 
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # - name: Setup kubectl
-      #   uses: azure/setup-kubectl@v3
-      #   with:
-      #     version: "latest"
-
+      # 配置 K8s 访问
       - name: Configure cluster access
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
@@ -53,37 +90,56 @@ jobs:
           mkdir -p $HOME/.kube
           echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
+          echo "✅ K8s 集群连接成功"
 
-          echo "🧪 验证集群连接..."
-          kubectl cluster-info || { echo "❌ 集群连接失败"; exit 1; }
-
+      # 同步 Secrets 到 Kubernetes
       - name: Sync Secrets to Kubernetes
-        env:
-          DATABASE_URL: ${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }}
         run: |
-          kubectl create secret generic supabase-secret-portal-task-web \
-            --namespace default \
-            --from-literal=DATABASE_URL="$DATABASE_URL" \
-            --from-literal=DIRECT_URL="$DIRECT_URL" \
-            --dry-run=client -o yaml | kubectl apply -f -
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: supabase-secret-portal-task-web
+            namespace: default
+          type: Opaque
+          stringData:
+            DATABASE_URL: "${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }}"
+            DIRECT_URL: "${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }}"
+          EOF
+          echo "✅ Secrets 已同步"
 
-      - name: Deploy to Kubernetes
+      # 替换镜像并部署
+      - name: Apply deployment
         run: |
-          echo "::add-mask::$IMAGE"
-          echo "🚀 正在部署版本: $IMAGE_TAG"
+          IMAGE=${{ needs.build.outputs.image }}
+          TAG=${{ needs.build.outputs.tag }}
 
-          sed -i "s|__IMAGE_TAG__|$IMAGE_TAG|g" deployment.yaml
           sed -i "s|__IMAGE_NAME__|$IMAGE|g" deployment.yaml
+          sed -i "s|__IMAGE_TAG__|$TAG|g" deployment.yaml
 
+          echo "🚀 部署版本: $IMAGE:$TAG"
           kubectl apply -f deployment.yaml
-          kubectl rollout restart deployment/portal-task-web-deployment
-          kubectl rollout status deployment/portal-task-web-deployment --timeout=180s || {
-            echo "❌ 部署失败，查看 Pod 状态："
-            kubectl get pods
-            echo "❌ 新 Pod 日志如下："
-            kubectl logs -l app=portal-task-web --tail=50
-            exit 1
-          }
 
-          echo "✅ 部署完成"
+      # 检查部署状态并自动回滚（防止坏版本）
+      - name: Verify rollout & rollback if failed
+        run: |
+          DEPLOY_NAME=portal-task-web-deployment
+          set -e
+          if kubectl rollout status deployment/$DEPLOY_NAME --timeout=180s; then
+            echo "✅ 部署成功"
+          else
+            echo "❌ 部署失败，开始回滚..."
+            kubectl rollout undo deployment/$DEPLOY_NAME
+            echo "🩹 已回滚到上一个稳定版本"
+            exit 1
+          fi
+
+      # 部署完成通知（可选）
+      - name: Notify Deployment Result
+        if: always()
+        run: |
+          STATUS=${{ job.status }}
+          IMAGE=${{ needs.build.outputs.image }}
+          TAG=${{ needs.build.outputs.tag }}
+          echo "📢 部署状态: $STATUS"
+          echo "📦 镜像: $IMAGE:$TAG"

@@ -61,6 +61,11 @@ jobs:
       # 构建并推送镜像，开启 Docker 层缓存
       - name: Build & Push Docker Image
         run: |
+          IMAGE=${{ steps.meta.outputs.image }}
+          IMAGE_TAG=${{ steps.meta.outputs.tag }}
+
+          echo "🛠 构建镜像标签: $IMAGE_TAG"
+
           docker build \
             --build-arg DATABASE_URL=${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }} \
             --build-arg DIRECT_URL=${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }} \

@@ -58,20 +58,18 @@ jobs:
           echo "🧩 IMAGE=$IMAGE"
           echo "🧩 TAG=$IMAGE_TAG"
 
-      - name: Configure Docker builder
-        run: |
-          docker buildx create --use --name default --driver docker || true
-
       # 构建并推送镜像，开启 Docker 层缓存
       - name: Build & Push Docker Image
         run: |
-          IMAGE=${{ steps.meta.outputs.image }}
-          IMAGE_TAG=${{ steps.meta.outputs.tag }}
-          docker buildx build --builder default --load --no-cache \
+          docker build \
             --build-arg DATABASE_URL=${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }} \
             --build-arg DIRECT_URL=${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }} \
-            -t $IMAGE:$IMAGE_TAG \
-            --push .
+            -t $IMAGE:$IMAGE_TAG .
+
+          docker push $IMAGE:$IMAGE_TAG
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
   # =============================
   # 2️⃣ 部署到 Kubernetes 集群

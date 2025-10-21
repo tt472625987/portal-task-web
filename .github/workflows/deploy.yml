@@ -67,7 +67,7 @@ jobs:
         run: |
           IMAGE=${{ steps.meta.outputs.image }}
           IMAGE_TAG=${{ steps.meta.outputs.tag }}
-          docker buildx build --builder default --load \
+          docker buildx build --builder default --load --no-cache \
             --build-arg DATABASE_URL=${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }} \
             --build-arg DIRECT_URL=${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }} \
             -t $IMAGE:$IMAGE_TAG \
@@ -147,3 +147,7 @@ jobs:
           TAG=${{ needs.build.outputs.tag }}
           echo "📢 部署状态: $STATUS"
           echo "📦 镜像: $IMAGE:$TAG"
+
+      - name: Clean Docker BuildKit cache
+        run: |
+          docker builder prune -af

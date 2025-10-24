@@ -34,54 +34,69 @@ jobs:
             ~/.cache/yarn
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
 
-      # 登录腾讯容器镜像服务 TCR
-      - name: Login to Tencent Container Registry
+      # 登录阿里云容器镜像服务 ACR
+      - name: Login to Alibaba Cloud Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ccr.ccs.tencentyun.com
-          username: ${{ secrets.TCR_USERNAME }}
-          password: ${{ secrets.TCR_PASSWORD }}
+          registry: registry.cn-chengdu.aliyuncs.com
+          username: ${{ secrets.ALICLOUD_USERNAME }}
+          password: ${{ secrets.ALICLOUD_PASSWORD }}
 
-      # 生成语义化版本号（优先用 Git tag，没有则用日期+commit）
+      # 生成镜像标签（构建号 + commit 短码）
       - name: Generate image metadata
         id: meta
         run: |
-          IMAGE=ccr.ccs.tencentyun.com/ray321/portal-task-web
-          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
-            VERSION=$(git describe --tags --abbrev=0)
-          else
-            VERSION="v0.0.0-$(git rev-parse --short HEAD)"
-          fi
-          IMAGE_TAG="${VERSION}-$(date +%Y%m%d)"
-          echo "image=$IMAGE" >> $GITHUB_OUTPUT
-          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "🧩 IMAGE=$IMAGE"
-          echo "🧩 TAG=$IMAGE_TAG"
+          # VPC 内网地址（用于推送，速度快且免流量费）
+          VPC_IMAGE=registry-vpc.cn-chengdu.aliyuncs.com/ray321/portal-task-web
+          # 公网地址（用于 K8s 拉取，VPC和公网指向同一个镜像仓库）
+          PUBLIC_IMAGE=registry.cn-chengdu.aliyuncs.com/ray321/portal-task-web
 
-      # 构建并推送镜像，开启 Docker 层缓存
+          # 镜像标签：build-构建号-commit短码
+          # 例如：build-123-abc1234
+          IMAGE_TAG="build-${GITHUB_RUN_NUMBER}-$(git rev-parse --short HEAD)"
+
+          # 输出给后续步骤
+          echo "image=$PUBLIC_IMAGE" >> $GITHUB_OUTPUT
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "vpc_image=$VPC_IMAGE" >> $GITHUB_OUTPUT
+
+          echo "🏷️  镜像标签: $IMAGE_TAG"
+          echo "📤 推送地址: $VPC_IMAGE:$IMAGE_TAG"
+          echo "📦 拉取地址: $PUBLIC_IMAGE:$IMAGE_TAG"
+
+      # 构建并推送镜像（使用 VPC 内网推送，速度更快）
       - name: Build & Push Docker Image
         run: |
-          IMAGE=${{ steps.meta.outputs.image }}
+          VPC_IMAGE=${{ steps.meta.outputs.vpc_image }}
+          PUBLIC_IMAGE=${{ steps.meta.outputs.image }}
           IMAGE_TAG=${{ steps.meta.outputs.tag }}
 
-          echo "🛠 构建镜像标签: $IMAGE_TAG"
+          echo "🛠 构建镜像: $VPC_IMAGE:$IMAGE_TAG"
 
+          # 构建镜像（只 tag VPC 地址）
           docker build \
             --build-arg DATABASE_URL=${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }} \
             --build-arg DIRECT_URL=${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }} \
-            -t $IMAGE:$IMAGE_TAG .
+            -t $VPC_IMAGE:$IMAGE_TAG .
 
-          docker push $IMAGE:$IMAGE_TAG
+          echo "📤 推送镜像到阿里云 ACR (VPC 内网，速度快且免流量费)..."
+          docker push $VPC_IMAGE:$IMAGE_TAG
 
+          echo "✅ 镜像推送成功"
+          echo "   🚀 推送地址: $VPC_IMAGE:$IMAGE_TAG"
+          echo "   📦 K8s拉取地址: $PUBLIC_IMAGE:$IMAGE_TAG"
+          echo "   💡 提示: VPC和公网地址指向同一个镜像，推送到VPC后可通过公网访问"
+
+          # 输出给后续步骤
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "IMAGE=$PUBLIC_IMAGE" >> $GITHUB_ENV
 
   # =============================
   # 2️⃣ 部署到 Kubernetes 集群
   # =============================
   deploy:
     name: 🚀 Deploy to Kubernetes
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     needs: build
     environment: production
 
@@ -99,8 +114,8 @@ jobs:
           export KUBECONFIG=$HOME/.kube/config
           echo "✅ K8s 集群连接成功"
 
-      # 同步 Secrets 到 Kubernetes
-      - name: Sync Secrets to Kubernetes
+      # 同步应用 Secrets 到 Kubernetes
+      - name: Sync Application Secrets to Kubernetes
         run: |
           cat <<EOF | kubectl apply -f -
           apiVersion: v1
@@ -113,7 +128,22 @@ jobs:
             DATABASE_URL: "${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }}"
             DIRECT_URL: "${{ secrets.SUPABASE_POSTGRES_DIRECT_URL }}"
           EOF
-          echo "✅ Secrets 已同步"
+          echo "✅ 应用 Secrets 已同步"
+
+      # 创建阿里云镜像拉取凭证（让腾讯云 K8s 能拉取阿里云 ACR 镜像）
+      - name: Create Alibaba Cloud ACR Pull Secret
+        run: |
+          # 删除旧的 secret（如果存在）
+          kubectl delete secret aliyun-acr-secret -n default --ignore-not-found=true
+
+          # 创建新的 docker-registry secret
+          kubectl create secret docker-registry aliyun-acr-secret \
+            --docker-server=registry.cn-chengdu.aliyuncs.com \
+            --docker-username="${{ secrets.ALICLOUD_USERNAME }}" \
+            --docker-password="${{ secrets.ALICLOUD_PASSWORD }}" \
+            --namespace=default
+
+          echo "✅ 阿里云镜像拉取凭证已创建"
 
       # 替换镜像并部署
       - name: Apply deployment

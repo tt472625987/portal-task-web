@@ -1,13 +1,13 @@
 # Install dependencies only when needed
 # ----------- Step 1: Install dependencies ------------
-FROM node:20-alpine AS deps
+FROM rocker.1ms.run/presearch/node AS deps
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Build the project
 # ----------- Step 2: Build project -------------------
-FROM node:20-alpine AS builder
+FROM rocker.1ms.run/presearch/node AS builder
 WORKDIR /app
 
 # ✅ 构建阶段允许传入数据库连接（但不存进镜像）
@@ -24,7 +24,7 @@ COPY . .
 RUN yarn build && rm -rf .next/cache
 
 # Production image
-FROM node:20-alpine AS runner
+FROM rocker.1ms.run/presearch/node AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

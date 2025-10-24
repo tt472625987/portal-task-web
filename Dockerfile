@@ -1,13 +1,13 @@
 # Install dependencies only when needed
 # ----------- Step 1: Install dependencies ------------
-FROM docker.1ms.run/node:latest AS deps
+FROM docker.1ms.run/node:20 AS deps
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Build the project
 # ----------- Step 2: Build project -------------------
-FROM docker.1ms.run/node:latest AS builder
+FROM docker.1ms.run/node:20 AS builder
 WORKDIR /app
 
 # ✅ 构建阶段允许传入数据库连接（但不存进镜像）
@@ -24,7 +24,7 @@ COPY . .
 RUN yarn build && rm -rf .next/cache
 
 # Production image
-FROM docker.1ms.run/node:latest AS runner
+FROM docker.1ms.run/node:20 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

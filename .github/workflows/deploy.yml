@@ -111,7 +111,11 @@ jobs:
         run: |
           mkdir -p $HOME/.kube
           echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
-          export KUBECONFIG=$HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          # 设置环境变量，使其在后续所有步骤中生效
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+          # 验证集群连接
+          kubectl cluster-info
           echo "✅ K8s 集群连接成功"
 
       # 同步应用 Secrets 到 Kubernetes

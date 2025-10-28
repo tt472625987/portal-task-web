@@ -114,8 +114,15 @@ jobs:
           chmod 600 $HOME/.kube/config
           # 设置环境变量，使其在后续所有步骤中生效
           echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+
+          # 显示集群 API 地址
+          echo "📍 集群 API 地址："
+          kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
+          echo ""
+
           # 验证集群连接
-          kubectl cluster-info
+          echo "🔍 验证集群连接..."
+          kubectl cluster-info --request-timeout=10s
           echo "✅ K8s 集群连接成功"
 
       # 同步应用 Secrets 到 Kubernetes

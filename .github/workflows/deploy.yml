@@ -4,6 +4,31 @@ on:
   push:
     branches: [main]
 
+# ========================================
+# 🔧 项目配置变量（复用到其他项目时只需修改这里）
+# ========================================
+env:
+  # 项目基本信息
+  PROJECT_NAME: portal-task-web # 项目名称（用于资源命名）
+  GITHUB_REPO: tt472625987/portal-task-web # GitHub 仓库地址
+
+  # 阿里云容器镜像服务配置
+  ACR_REGION: cn-chengdu # 阿里云地区
+  ACR_NAMESPACE: ray321 # 阿里云 ACR 命名空间
+  ACR_REGISTRY_VPC: registry-vpc.cn-chengdu.aliyuncs.com # VPC 内网地址（推送用）
+  ACR_REGISTRY_PUBLIC: registry.cn-chengdu.aliyuncs.com # 公网地址（K8s 拉取用）
+
+  # Kubernetes 配置
+  K8S_NAMESPACE: default # K8s 命名空间
+  K8S_DEPLOYMENT_FILE: deployment.yaml # K8s 部署文件名
+
+  # 健康检查配置
+  HEALTH_CHECK_PATH: /api/health # 健康检查路径
+  CONTAINER_PORT: 3000 # 容器端口
+
+  # 部署超时时间（秒）
+  ROLLOUT_TIMEOUT: 180
+
 jobs:
   # =============================
   # 1️⃣ 构建镜像并推送到腾讯 TCR
@@ -21,7 +46,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          repository: tt472625987/portal-task-web
+          repository: ${{ env.GITHUB_REPO }}
           fetch-depth: 0
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY || '' }}
 
@@ -38,7 +63,7 @@ jobs:
       - name: Login to Alibaba Cloud Container Registry (VPC)
         uses: docker/login-action@v3
         with:
-          registry: registry-vpc.cn-chengdu.aliyuncs.com
+          registry: ${{ env.ACR_REGISTRY_VPC }}
           username: ${{ secrets.ALICLOUD_USERNAME }}
           password: ${{ secrets.ALICLOUD_PASSWORD }}
 
@@ -47,9 +72,9 @@ jobs:
         id: meta
         run: |
           # VPC 内网地址（用于推送，速度快且免流量费）
-          VPC_IMAGE=registry-vpc.cn-chengdu.aliyuncs.com/ray321/portal-task-web
+          VPC_IMAGE=${{ env.ACR_REGISTRY_VPC }}/${{ env.ACR_NAMESPACE }}/${{ env.PROJECT_NAME }}
           # 公网地址（用于 K8s 拉取，VPC和公网指向同一个镜像仓库）
-          PUBLIC_IMAGE=registry.cn-chengdu.aliyuncs.com/ray321/portal-task-web
+          PUBLIC_IMAGE=${{ env.ACR_REGISTRY_PUBLIC }}/${{ env.ACR_NAMESPACE }}/${{ env.PROJECT_NAME }}
 
           # 镜像标签：build-构建号-commit短码
           # 例如：build-123-abc1234
@@ -105,7 +130,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          repository: tt472625987/portal-task-web
+          repository: ${{ env.GITHUB_REPO }}
           fetch-depth: 0
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY || '' }}
 
@@ -137,8 +162,8 @@ jobs:
           apiVersion: v1
           kind: Secret
           metadata:
-            name: supabase-secret-portal-task-web
-            namespace: default
+            name: supabase-secret-${{ env.PROJECT_NAME }}
+            namespace: ${{ env.K8S_NAMESPACE }}
           type: Opaque
           stringData:
             DATABASE_URL: "${{ secrets.SUPABASE_POSTGRES_DATABASE_URL }}"
@@ -150,14 +175,14 @@ jobs:
       - name: Create Alibaba Cloud ACR Pull Secret
         run: |
           # 删除旧的 secret（如果存在）
-          kubectl delete secret aliyun-acr-secret -n default --ignore-not-found=true
+          kubectl delete secret aliyun-acr-secret -n ${{ env.K8S_NAMESPACE }} --ignore-not-found=true
 
           # 创建新的 docker-registry secret
           kubectl create secret docker-registry aliyun-acr-secret \
-            --docker-server=registry.cn-chengdu.aliyuncs.com \
+            --docker-server=${{ env.ACR_REGISTRY_PUBLIC }} \
             --docker-username="${{ secrets.ALICLOUD_USERNAME }}" \
             --docker-password="${{ secrets.ALICLOUD_PASSWORD }}" \
-            --namespace=default
+            --namespace=${{ env.K8S_NAMESPACE }}
 
           echo "✅ 阿里云镜像拉取凭证已创建"
 
@@ -167,18 +192,18 @@ jobs:
           IMAGE=${{ needs.build.outputs.image }}
           TAG=${{ needs.build.outputs.tag }}
 
-          sed -i "s|__IMAGE_NAME__|$IMAGE|g" deployment.yaml
-          sed -i "s|__IMAGE_TAG__|$TAG|g" deployment.yaml
+          sed -i "s|__IMAGE_NAME__|$IMAGE|g" ${{ env.K8S_DEPLOYMENT_FILE }}
+          sed -i "s|__IMAGE_TAG__|$TAG|g" ${{ env.K8S_DEPLOYMENT_FILE }}
 
           echo "🚀 部署版本: $IMAGE:$TAG"
-          kubectl apply -f deployment.yaml
+          kubectl apply -f ${{ env.K8S_DEPLOYMENT_FILE }}
 
       # 检查部署状态并自动回滚（防止坏版本）
       - name: Verify rollout & rollback if failed
         run: |
-          DEPLOY_NAME=portal-task-web-deployment
+          DEPLOY_NAME=${{ env.PROJECT_NAME }}-deployment
           set -e
-          if kubectl rollout status deployment/$DEPLOY_NAME --timeout=180s; then
+          if kubectl rollout status deployment/$DEPLOY_NAME --timeout=${{ env.ROLLOUT_TIMEOUT }}s; then
             echo "✅ 部署成功"
           else
             echo "❌ 部署失败，开始回滚..."

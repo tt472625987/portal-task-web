@@ -1,3 +1,15 @@
+# ========================================
+# 🔧 项目配置说明（复用到其他项目时需要修改）
+# ========================================
+# 需要修改的地方：
+# 1. 所有 "portal-task-web" 改为你的项目名称
+# 2. secret name: supabase-secret-portal-task-web 改为 supabase-secret-{项目名}
+# 3. Ingress host: task.tt829.cn 改为你的域名
+# 4. Ingress secretName: portal-task-web-tls 改为 {项目名}-tls
+# 5. containerPort 和 targetPort: 根据你的项目端口修改
+# 6. 健康检查路径: /api/health 改为你的项目健康检查路径
+# ========================================
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
